@@ -64,7 +64,7 @@ DELETE /order/:orderId
 
 The API provides complete OpenAPI 3.0 documentation, accessible at:
 
-👉 http://localhost:3000/docs
+👉 [http://localhost:3000/docs](http://localhost:3000/api-docs/#/)
 
 The documentation includes:
 
