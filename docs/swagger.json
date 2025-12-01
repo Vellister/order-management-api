@@ -1,0 +1,644 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Order Management API",
+    "version": "1.0.0",
+    "description": "API REST completa para gerenciamento de pedidos com autenticação JWT e mapeamento de dados",
+    "contact": {
+      "name": "Suporte API",
+      "email": "suporte@exemplo.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Servidor de Desenvolvimento"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Endpoints para autenticação e gerenciamento de tokens JWT"
+    },
+    {
+      "name": "Pedidos",
+      "description": "Endpoints para gerenciamento de pedidos (CRUD completo)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Insira o token JWT obtido no endpoint de login"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "example": "admin"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@example.com"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrderInput": {
+        "type": "object",
+        "required": [ "numeroPedido", "valorTotal", "dataCriacao", "items" ],
+        "properties": {
+          "numeroPedido": {
+            "type": "string",
+            "description": "Identificador único do pedido",
+            "example": "v10089015vdb-01"
+          },
+          "valorTotal": {
+            "type": "number",
+            "description": "Valor total do pedido",
+            "example": 10000
+          },
+          "dataCriacao": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora de criação do pedido",
+            "example": "2023-07-19T12:24:11.5299601+00:00"
+          },
+          "items": {
+            "type": "array",
+            "description": "Lista de itens do pedido",
+            "items": {
+              "$ref": "#/components/schemas/ItemInput"
+            }
+          }
+        }
+      },
+      "ItemInput": {
+        "type": "object",
+        "required": [ "idItem", "quantidadeItem", "valorItem" ],
+        "properties": {
+          "idItem": {
+            "type": "string",
+            "description": "ID do produto",
+            "example": "2434"
+          },
+          "quantidadeItem": {
+            "type": "integer",
+            "description": "Quantidade do item",
+            "example": 1
+          },
+          "valorItem": {
+            "type": "number",
+            "description": "Valor unitário do item",
+            "example": 1000
+          }
+        }
+      },
+      "OrderOutput": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "ID do pedido (mapeado de numeroPedido)",
+            "example": "v10089016vdb"
+          },
+          "value": {
+            "type": "number",
+            "description": "Valor total do pedido (mapeado de valorTotal)",
+            "example": 10000
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação (mapeado de dataCriacao)",
+            "example": "2023-07-19T12:24:11.529Z"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemOutput"
+            }
+          }
+        }
+      },
+      "ItemOutput": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "description": "ID do produto (mapeado de idItem)",
+            "example": 2434
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantidade (mapeado de quantidadeItem)",
+            "example": 1
+          },
+          "price": {
+            "type": "number",
+            "description": "Preço unitário (mapeado de valorItem)",
+            "example": 1000
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operação realizada com sucesso"
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Erro na operação"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [ "Autenticação" ],
+        "summary": "Registra um novo usuário",
+        "description": "Cria uma nova conta de usuário no sistema",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [ "username", "email", "password" ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "novousuario"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "usuario@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "senha123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "409": {
+            "description": "Usuário já existe"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [ "Autenticação" ],
+        "summary": "Realiza login",
+        "description": "Autentica o usuário e retorna um token JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [ "username", "password" ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "admin"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "admin123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Login realizado com sucesso"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/auth/verify": {
+      "get": {
+        "tags": [ "Autenticação" ],
+        "summary": "Verifica token JWT",
+        "description": "Valida se o token fornecido é válido",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token válido"
+          },
+          "401": {
+            "description": "Token não fornecido"
+          },
+          "403": {
+            "description": "Token inválido ou expirado"
+          }
+        }
+      }
+    },
+    "/order": {
+      "post": {
+        "tags": [ "Pedidos" ],
+        "summary": "Cria um novo pedido",
+        "description": "Cria um novo pedido com mapeamento automático dos campos",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderInput"
+              },
+              "example": {
+                "numeroPedido": "v10089015vdb-01",
+                "valorTotal": 10000,
+                "dataCriacao": "2023-07-19T12:24:11.5299601+00:00",
+                "items": [
+                  {
+                    "idItem": "2434",
+                    "quantidadeItem": 1,
+                    "valorItem": 1000
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrderOutput"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "409": {
+            "description": "Pedido já existe"
+          }
+        }
+      }
+    },
+    "/order/{orderId}": {
+      "get": {
+        "tags": [ "Pedidos" ],
+        "summary": "Obtém um pedido específico",
+        "description": "Retorna os dados completos de um pedido pelo ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID do pedido",
+            "example": "v10089016vdb"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrderOutput"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Pedido não encontrado"
+          }
+        }
+      },
+      "put": {
+        "tags": [ "Pedidos" ],
+        "summary": "Atualiza um pedido",
+        "description": "Atualiza os dados de um pedido existente",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID do pedido a ser atualizado",
+            "example": "v10089016vdb"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido atualizado com sucesso"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Pedido não encontrado"
+          }
+        }
+      },
+      "delete": {
+        "tags": [ "Pedidos" ],
+        "summary": "Deleta um pedido",
+        "description": "Remove um pedido e todos os seus itens do sistema",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID do pedido a ser deletado",
+            "example": "v10089016vdb"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido deletado com sucesso"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Pedido não encontrado"
+          }
+        }
+      }
+    },
+    "/order/list": {
+      "get": {
+        "tags": [ "Pedidos" ],
+        "summary": "Lista todos os pedidos",
+        "description": "Retorna uma lista paginada de todos os pedidos com seus itens",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Número da página"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Itens por página"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "creation_date",
+              "enum": [ "creation_date", "value", "order_id" ]
+            },
+            "description": "Campo para ordenação"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DESC",
+              "enum": [ "ASC", "DESC" ]
+            },
+            "description": "Ordem de classificação"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OrderOutput"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "total": {
+                          "type": "integer",
+                          "example": 50
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "example": 5
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          }
+        }
+      }
+    }
+  }
+}
